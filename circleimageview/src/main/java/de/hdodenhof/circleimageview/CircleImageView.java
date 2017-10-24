@@ -158,10 +158,13 @@ public class CircleImageView extends ImageView {
             return;
         }
 
+        //  画图像背景
         if (mCircleBackgroundColor != Color.TRANSPARENT) {
             canvas.drawCircle(mDrawableRect.centerX(), mDrawableRect.centerY(), mDrawableRadius, mCircleBackgroundPaint);
         }
+        //  画图像
         canvas.drawCircle(mDrawableRect.centerX(), mDrawableRect.centerY(), mDrawableRadius, mBitmapPaint);
+        //  画边缘
         if (mBorderWidth > 0) {
             canvas.drawCircle(mBorderRect.centerX(), mBorderRect.centerY(), mBorderRadius, mBorderPaint);
         }
@@ -229,7 +232,6 @@ public class CircleImageView extends ImageView {
      * Return the color drawn behind the circle-shaped drawable.
      *
      * @return The color drawn behind the drawable
-     *
      * @deprecated Use {@link #getCircleBackgroundColor()} instead.
      */
     @Deprecated
@@ -242,7 +244,6 @@ public class CircleImageView extends ImageView {
      * this has no effect if the drawable is opaque or no drawable is set.
      *
      * @param fillColor The color to be drawn behind the drawable
-     *
      * @deprecated Use {@link #setCircleBackgroundColor(int)} instead.
      */
     @Deprecated
@@ -256,7 +257,6 @@ public class CircleImageView extends ImageView {
      *
      * @param fillColorRes The color resource to be resolved to a color and
      *                     drawn behind the drawable
-     *
      * @deprecated Use {@link #setCircleBackgroundColorResource(int)} instead.
      */
     @Deprecated
@@ -349,6 +349,7 @@ public class CircleImageView extends ImageView {
         }
     }
 
+    //获取xml文件设置的图片
     private Bitmap getBitmapFromDrawable(Drawable drawable) {
         if (drawable == null) {
             return null;
@@ -386,6 +387,7 @@ public class CircleImageView extends ImageView {
         setup();
     }
 
+    //重点在这里
     private void setup() {
         if (!mReady) {
             mSetupPending = true;
@@ -401,8 +403,13 @@ public class CircleImageView extends ImageView {
             return;
         }
 
+        //  BitmapShader是Shader的子类，可以通过Paint.setShader（Shader shader）进行设置
+        //  mBitmapShader这里用来拉抻
+        //  这里我们只关注BitmapShader，构造方法：
+        //  mBitmapShader = new BitmapShader(bitmap, TileMode.CLAMP, TileMode.CLAMP); CLAMP 拉伸 REPEAT 重复 MIRROR 镜像
         mBitmapShader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
 
+        //  BitmapShader设置给mBitmapPaint
         mBitmapPaint.setAntiAlias(true);
         mBitmapPaint.setShader(mBitmapShader);
 
@@ -411,6 +418,7 @@ public class CircleImageView extends ImageView {
         mBorderPaint.setColor(mBorderColor);
         mBorderPaint.setStrokeWidth(mBorderWidth);
 
+        //  mCircleBackgroundPaint画图像背景的paint
         mCircleBackgroundPaint.setStyle(Paint.Style.FILL);
         mCircleBackgroundPaint.setAntiAlias(true);
         mCircleBackgroundPaint.setColor(mCircleBackgroundColor);
@@ -418,22 +426,26 @@ public class CircleImageView extends ImageView {
         mBitmapHeight = mBitmap.getHeight();
         mBitmapWidth = mBitmap.getWidth();
 
+        //计算画边缘的方位
         mBorderRect.set(calculateBounds());
+        //边缘半径
         mBorderRadius = Math.min((mBorderRect.height() - mBorderWidth) / 2.0f, (mBorderRect.width() - mBorderWidth) / 2.0f);
 
         mDrawableRect.set(mBorderRect);
         if (!mBorderOverlay && mBorderWidth > 0) {
             mDrawableRect.inset(mBorderWidth - 1.0f, mBorderWidth - 1.0f);
         }
+        //图片半径
         mDrawableRadius = Math.min(mDrawableRect.height() / 2.0f, mDrawableRect.width() / 2.0f);
 
         applyColorFilter();
+        //
         updateShaderMatrix();
         invalidate();
     }
 
     private RectF calculateBounds() {
-        int availableWidth  = getWidth() - getPaddingLeft() - getPaddingRight();
+        int availableWidth = getWidth() - getPaddingLeft() - getPaddingRight();
         int availableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
 
         int sideLength = Math.min(availableWidth, availableHeight);
@@ -449,8 +461,10 @@ public class CircleImageView extends ImageView {
         float dx = 0;
         float dy = 0;
 
+        //   mShaderMatrix用来设置缩放比例
         mShaderMatrix.set(null);
 
+        // 根据乘积大小
         if (mBitmapWidth * mDrawableRect.height() > mDrawableRect.width() * mBitmapHeight) {
             scale = mDrawableRect.height() / (float) mBitmapHeight;
             dx = (mDrawableRect.width() - mBitmapWidth * scale) * 0.5f;
@@ -460,6 +474,7 @@ public class CircleImageView extends ImageView {
         }
 
         mShaderMatrix.setScale(scale, scale);
+        //  TODO 不是很懂 移动图像
         mShaderMatrix.postTranslate((int) (dx + 0.5f) + mDrawableRect.left, (int) (dy + 0.5f) + mDrawableRect.top);
 
         mBitmapShader.setLocalMatrix(mShaderMatrix);
